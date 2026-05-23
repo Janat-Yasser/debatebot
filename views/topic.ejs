@@ -1,0 +1,82 @@
+<div class="topic-page">
+  <div class="topic-hero">
+    <a href="/" class="back-link">&larr; All Topics</a>
+    <div class="topic-hero-cat"><%= topic.category %></div>
+    <div class="topic-hero-meta">
+      <span class="topic-difficulty difficulty-<%= topic.difficulty.toLowerCase() %>"><%= topic.difficulty %></span>
+    </div>
+    <h1 class="topic-hero-title"><%= topic.title %></h1>
+    <p class="topic-hero-desc"><%= topic.description %></p>
+  </div>
+
+  <!-- Side selection -->
+  <div class="side-selection">
+    <h2 class="side-selection-title">Choose Your Side</h2>
+    <p class="side-selection-sub">The AI will argue the opposite position with full conviction.</p>
+
+    <div class="sides-wrap">
+      <form action="/debate/start" method="POST" class="side-form">
+        <input type="hidden" name="topicId" value="<%= topic.id %>">
+        <input type="hidden" name="userSide" value="for">
+        <button type="submit" class="side-card side-card-for">
+          <div class="side-card-indicator for-indicator"></div>
+          <div class="side-card-label">I Argue</div>
+          <div class="side-card-name"><%= topic.for_label %></div>
+          <p class="side-card-desc">You argue in favor of the proposition. The AI argues against it.</p>
+          <div class="side-card-cta">Take This Side &rarr;</div>
+        </button>
+      </form>
+
+      <div class="vs-divider">
+        <div class="vs-line"></div>
+        <div class="vs-circle">VS</div>
+        <div class="vs-line"></div>
+      </div>
+
+      <form action="/debate/start" method="POST" class="side-form">
+        <input type="hidden" name="topicId" value="<%= topic.id %>">
+        <input type="hidden" name="userSide" value="against">
+        <button type="submit" class="side-card side-card-against">
+          <div class="side-card-indicator against-indicator"></div>
+          <div class="side-card-label">I Argue</div>
+          <div class="side-card-name"><%= topic.against_label %></div>
+          <p class="side-card-desc">You argue against the proposition. The AI defends it.</p>
+          <div class="side-card-cta">Take This Side &rarr;</div>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Evidence preview -->
+  <div class="evidence-preview">
+    <h3 class="evidence-preview-title">Knowledge Base Preview</h3>
+    <p class="evidence-preview-sub">The AI retrieves from <%= topic.chunks.length %> evidence chunks — real data, real studies, real arguments.</p>
+    <div class="evidence-grid">
+      <% topic.chunks.slice(0, 4).forEach(chunk => { %>
+        <div class="evidence-chunk evidence-<%= chunk.side %>">
+          <div class="chunk-side-tag"><%= chunk.side === 'for' ? topic.for_label : topic.against_label %></div>
+          <p class="chunk-text"><%= chunk.text.substring(0, 130) %>...</p>
+        </div>
+      <% }) %>
+    </div>
+    <p class="evidence-note">+ <%= topic.chunks.length - 4 %> more evidence chunks retrieved dynamically during the debate</p>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none">
+  <div class="loading-card">
+    <div class="loading-mark">DB</div>
+    <h3>The Chamber Awaits</h3>
+    <p>AI is preparing its opening argument...</p>
+    <div class="loading-bar"><div class="loading-fill"></div></div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.side-form').forEach(form => {
+    form.addEventListener('submit', () => {
+      document.getElementById('loadingOverlay').style.display = 'flex';
+    });
+  });
+</script>

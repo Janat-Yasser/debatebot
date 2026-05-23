@@ -1,0 +1,81 @@
+<div class="hero">
+  <div class="hero-bg-text">DEBATE</div>
+  <div class="hero-content">
+    <div class="hero-badge">AI-Powered · Evidence-Grounded · RAG</div>
+    <h1 class="hero-title">
+      Every Argument.<br>
+      <em>Both Sides.</em>
+    </h1>
+    <p class="hero-sub">
+      Pick a topic. Choose your side. Face an AI that argues the opposite
+      with real evidence — no hallucinations, no cheap shots. Just the
+      strongest possible case against you.
+    </p>
+    <div class="hero-stats">
+      <div class="hstat"><span class="hstat-n"><%= topics.length %></span><span>Topics</span></div>
+      <div class="hstat-div"></div>
+      <div class="hstat"><span class="hstat-n">RAG</span><span>Evidence-grounded</span></div>
+      <div class="hstat-div"></div>
+      <div class="hstat"><span class="hstat-n">6</span><span>Rounds per debate</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Category filters -->
+<div class="filters-section">
+  <div class="filters-wrap">
+    <button class="filter-btn active" data-cat="all">All Topics</button>
+    <% categories.forEach(cat => { %>
+      <button class="filter-btn" data-cat="<%= cat %>"><%= cat %></button>
+    <% }) %>
+  </div>
+</div>
+
+<!-- Topics grid -->
+<div class="topics-section">
+  <div class="topics-grid" id="topicsGrid">
+    <% topics.forEach(topic => { %>
+      <a href="/topic/<%= topic.id %>" class="topic-card" data-category="<%= topic.category %>">
+        <div class="topic-card-top">
+          <span class="topic-cat-badge"><%= topic.category %></span>
+          <span class="topic-difficulty difficulty-<%= topic.difficulty.toLowerCase() %>"><%= topic.difficulty %></span>
+        </div>
+        <h3 class="topic-title"><%= topic.title %></h3>
+        <p class="topic-desc"><%= topic.description %></p>
+        <div class="topic-sides">
+          <span class="side-pill side-for"><%= topic.for_label %></span>
+          <span class="vs-badge">VS</span>
+          <span class="side-pill side-against"><%= topic.against_label %></span>
+        </div>
+        <div class="topic-cta">Enter the Chamber &rarr;</div>
+      </a>
+    <% }) %>
+  </div>
+</div>
+
+<!-- How it works -->
+<div class="how-section">
+  <h2 class="how-title">How It Works</h2>
+  <div class="how-grid">
+    <div class="how-step">
+      <div class="how-num">01</div>
+      <h3>Choose Your Side</h3>
+      <p>Pick a topic and decide which position you will argue. The AI takes the opposite stance with full conviction.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-num">02</div>
+      <h3>RAG Retrieval</h3>
+      <p>As you argue, the AI retrieves the most relevant facts and studies from its knowledge base to ground every counterargument.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-num">03</div>
+      <h3>6 Rounds of Battle</h3>
+      <p>Trade arguments over 6 rounds. The AI never concedes — it finds new angles, rebuts your points, and escalates.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-num">04</div>
+      <h3>Judge's Verdict</h3>
+      <p>An impartial AI judge scores the debate, names the winner, and gives both sides constructive feedback.</p>
+    </div>
+  </div>
+</div>

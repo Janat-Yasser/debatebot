@@ -1,0 +1,95 @@
+<div class="verdict-page">
+  <div class="verdict-hero">
+    <div class="verdict-eyebrow">Judge's Verdict</div>
+    <h1 class="verdict-title"><%= topic.title %></h1>
+  </div>
+
+  <% if (verdict) { %>
+
+  <!-- Winner banner -->
+  <div class="winner-banner winner-<%= verdict.winner %>">
+    <div class="winner-crown-text">
+      <% if (verdict.winner === 'draw') { %>DRAW<% } else { %>WINNER<% } %>
+    </div>
+    <div class="winner-info">
+      <% if (verdict.winner === 'draw') { %>
+        <div class="winner-label">THE VERDICT</div>
+        <div class="winner-name">Both sides argued equally well</div>
+      <% } else { %>
+        <div class="winner-label">THE VERDICT</div>
+        <div class="winner-name"><%= verdict.winner_label %></div>
+        <% if (verdict.winner === session.userSide) { %>
+          <div class="winner-you-tag">You won this debate</div>
+        <% } else { %>
+          <div class="winner-ai-tag">The AI wins this round</div>
+        <% } %>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Scores -->
+  <div class="scores-section">
+    <div class="score-card score-for">
+      <div class="score-side-label"><%= topic.for_label %></div>
+      <div class="score-bar-wrap">
+        <div class="score-bar" style="width:<%= verdict.score_for %>%"></div>
+      </div>
+      <div class="score-num"><%= verdict.score_for %></div>
+    </div>
+    <div class="score-card score-against">
+      <div class="score-side-label"><%= topic.against_label %></div>
+      <div class="score-bar-wrap">
+        <div class="score-bar" style="width:<%= verdict.score_against %>%"></div>
+      </div>
+      <div class="score-num"><%= verdict.score_against %></div>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="verdict-cards">
+    <div class="verdict-card verdict-summary">
+      <h3>Judge's Summary</h3>
+      <p><%= verdict.summary %></p>
+    </div>
+    <div class="verdict-card verdict-moment">
+      <h3>Key Moment</h3>
+      <p><%= verdict.key_moment %></p>
+    </div>
+    <div class="verdict-card verdict-lesson">
+      <h3>Lesson Learned</h3>
+      <p><%= verdict.lesson %></p>
+    </div>
+  </div>
+
+  <!-- Strengths -->
+  <div class="strengths-section">
+    <div class="strengths-col">
+      <h3 class="strengths-title strengths-for"><%= topic.for_label %> — Strengths</h3>
+      <ul class="strengths-list">
+        <% (verdict.for_strengths || []).forEach(s => { %>
+          <li><span class="strength-bullet">+</span> <%= s %></li>
+        <% }) %>
+      </ul>
+    </div>
+    <div class="strengths-col">
+      <h3 class="strengths-title strengths-against"><%= topic.against_label %> — Strengths</h3>
+      <ul class="strengths-list">
+        <% (verdict.against_strengths || []).forEach(s => { %>
+          <li><span class="strength-bullet">+</span> <%= s %></li>
+        <% }) %>
+      </ul>
+    </div>
+  </div>
+
+  <% } else { %>
+    <div class="verdict-error">
+      <p>Unable to generate verdict. The debate may not have enough rounds.</p>
+    </div>
+  <% } %>
+
+  <!-- Actions -->
+  <div class="verdict-actions">
+    <a href="/topic/<%= topic.id %>" class="btn-rematch">Rematch</a>
+    <a href="/" class="btn-newtopic">New Topic</a>
+  </div>
+</div>
