@@ -1,18 +1,7 @@
-<div class="error-page">
-  <div class="error-icon">!</div>
-  <h1 class="error-title">Order in the Court</h1>
-  <p class="error-message"><%= message %></p>
-  <% if (message && message.includes('API')) { %>
-    <div class="error-help">
-      <h3>How to fix this:</h3>
-      <ol>
-        <li>Go to <a href="https://console.groq.com" target="_blank">console.groq.com</a> and sign up free</li>
-        <li>Create an API key</li>
-        <li>Copy <code>.env.example</code> to <code>.env</code></li>
-        <li>Set <code>GROQ_API_KEY=your_key_here</code></li>
-        <li>Restart the server</li>
-      </ol>
-    </div>
-  <% } %>
-  <a href="/" class="btn-home">&larr; Return Home</a>
-</div>
+<% const keyProblem = message && message.includes('API'); %>
+<section class="err">
+  <p class="kicker">Point of order</p>
+  <h1 class="err-title" data-split>Order, order.</h1>
+  <p class="err-msg" data-reveal><%= keyProblem ? 'The debate engine isn\'t set up yet. Please contact the administrator to add a Groq key.' : message %></p>
+  <a href="/" class="btn btn-verdict" data-reveal>Back to the chamber <span aria-hidden="true">&rarr;</span></a>
+</section>

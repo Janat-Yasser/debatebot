@@ -1,81 +1,114 @@
-<div class="hero">
-  <div class="hero-bg-text">DEBATE</div>
-  <div class="hero-content">
-    <div class="hero-badge">AI-Powered · Evidence-Grounded · RAG</div>
-    <h1 class="hero-title">
-      Every Argument.<br>
-      <em>Both Sides.</em>
-    </h1>
-    <p class="hero-sub">
-      Pick a topic. Choose your side. Face an AI that argues the opposite
-      with real evidence — no hallucinations, no cheap shots. Just the
-      strongest possible case against you.
-    </p>
-    <div class="hero-stats">
-      <div class="hstat"><span class="hstat-n"><%= topics.length %></span><span>Topics</span></div>
-      <div class="hstat-div"></div>
-      <div class="hstat"><span class="hstat-n">RAG</span><span>Evidence-grounded</span></div>
-      <div class="hstat-div"></div>
-      <div class="hstat"><span class="hstat-n">6</span><span>Rounds per debate</span></div>
-    </div>
-  </div>
-</div>
+<%
+  const pad = n => String(n).padStart(2, '0');
+  const counts = {};
+  topics.forEach(t => { counts[t.category] = (counts[t.category] || 0) + 1; });
+%>
 
-<!-- Category filters -->
-<div class="filters-section">
-  <div class="filters-wrap">
-    <button class="filter-btn active" data-cat="all">All Topics</button>
-    <% categories.forEach(cat => { %>
-      <button class="filter-btn" data-cat="<%= cat %>"><%= cat %></button>
-    <% }) %>
-  </div>
-</div>
-
-<!-- Topics grid -->
-<div class="topics-section">
-  <div class="topics-grid" id="topicsGrid">
-    <% topics.forEach(topic => { %>
-      <a href="/topic/<%= topic.id %>" class="topic-card" data-category="<%= topic.category %>">
-        <div class="topic-card-top">
-          <span class="topic-cat-badge"><%= topic.category %></span>
-          <span class="topic-difficulty difficulty-<%= topic.difficulty.toLowerCase() %>"><%= topic.difficulty %></span>
+<!-- ── Split hero: drag the divide ───────────── -->
+<section class="hero" id="hero" style="--split:50%">
+  <% ['for', 'against'].forEach(side => { %>
+    <div class="hero-layer hero-<%= side %>" <%- side === 'against' ? 'aria-hidden="true"' : '' %>>
+      <div class="hero-photo"></div>
+      <div class="hero-inner">
+        <div class="hero-top"></div>
+        <h1 class="hero-title">
+          <span class="line" data-split>Every argument</span>
+          <span class="line" data-split>has a <em>counter.</em></span>
+        </h1>
+        <div class="hero-bottom">
+          <p class="hero-sub">Pick a motion. Take a side. An AI argues the other one, with sources, for six rounds. Then a judge decides.</p>
+          <dl class="hero-stats">
+            <div><dt data-count="<%= topics.length %>"><%= topics.length %></dt><dd>Motions</dd></div>
+            <div><dt data-count="6">6</dt><dd>Rounds</dd></div>
+            <div><dt>1</dt><dd>Verdict</dd></div>
+          </dl>
         </div>
-        <h3 class="topic-title"><%= topic.title %></h3>
-        <p class="topic-desc"><%= topic.description %></p>
-        <div class="topic-sides">
-          <span class="side-pill side-for"><%= topic.for_label %></span>
-          <span class="vs-badge">VS</span>
-          <span class="side-pill side-against"><%= topic.against_label %></span>
-        </div>
-        <div class="topic-cta">Enter the Chamber &rarr;</div>
-      </a>
-    <% }) %>
+      </div>
+    </div>
+  <% }) %>
+  <div class="hero-divide" aria-hidden="true"><span class="hero-knob">VS</span></div>
+  <a href="#motions" class="hero-cue" aria-label="Scroll to motions"><span></span></a>
+</section>
+
+<!-- ── Ticker ────────────────────────────────── -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <% for (let k = 0; k < 2; k++) { topics.forEach(t => { %>
+      <span><%= t.title %></span><b>&#10022;</b>
+    <% }) } %>
   </div>
 </div>
 
-<!-- How it works -->
-<div class="how-section">
-  <h2 class="how-title">How It Works</h2>
-  <div class="how-grid">
-    <div class="how-step">
-      <div class="how-num">01</div>
-      <h3>Choose Your Side</h3>
-      <p>Pick a topic and decide which position you will argue. The AI takes the opposite stance with full conviction.</p>
+<!-- ── Motions ───────────────────────────────── -->
+<section class="motions" id="motions">
+  <div class="motions-head">
+    <div>
+      <p class="kicker" data-reveal>Order paper</p>
+      <h2 class="section-title" data-split>This House believes&hellip;</h2>
     </div>
-    <div class="how-step">
-      <div class="how-num">02</div>
-      <h3>RAG Retrieval</h3>
-      <p>As you argue, the AI retrieves the most relevant facts and studies from its knowledge base to ground every counterargument.</p>
-    </div>
-    <div class="how-step">
-      <div class="how-num">03</div>
-      <h3>6 Rounds of Battle</h3>
-      <p>Trade arguments over 6 rounds. The AI never concedes — it finds new angles, rebuts your points, and escalates.</p>
-    </div>
-    <div class="how-step">
-      <div class="how-num">04</div>
-      <h3>Judge's Verdict</h3>
-      <p>An impartial AI judge scores the debate, names the winner, and gives both sides constructive feedback.</p>
+    <div class="filters" role="tablist" data-reveal>
+      <button class="filter-btn active" data-cat="all">All <sup><%= topics.length %></sup></button>
+      <% categories.forEach(cat => { %>
+        <button class="filter-btn" data-cat="<%= cat %>"><%= cat %> <sup><%= counts[cat] %></sup></button>
+      <% }) %>
+      <span class="filter-ink" aria-hidden="true"></span>
     </div>
   </div>
-</div>
+
+  <ol class="motion-list" id="topicsGrid">
+    <% topics.forEach((topic, i) => { %>
+      <li class="motion-item" data-category="<%= topic.category %>" data-reveal>
+        <a href="/topic/<%= topic.id %>" class="motion" data-cat="<%= topic.category %>">
+          <span class="motion-num"><%= pad(i + 1) %></span>
+          <span class="motion-main">
+            <span class="motion-title"><%= topic.title %></span>
+            <span class="motion-sides">
+              <i class="s-for"><%= topic.for_label %></i>
+              <i class="s-vs">vs</i>
+              <i class="s-against"><%= topic.against_label %></i>
+            </span>
+          </span>
+          <span class="motion-meta">
+            <span class="motion-cat"><%= topic.category %></span>
+            <span class="diff diff-<%= topic.difficulty.toLowerCase() %>"><%= topic.difficulty %></span>
+          </span>
+          <span class="motion-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          </span>
+        </a>
+      </li>
+    <% }) %>
+  </ol>
+</section>
+
+<div class="peek" aria-hidden="true"><div class="peek-img"></div></div>
+
+<!-- ── Format ────────────────────────────────── -->
+<section class="format" id="format">
+  <div class="format-head">
+    <p class="kicker kicker-light" data-reveal>The format</p>
+    <h2 class="section-title" data-split>Four stages. No mercy.</h2>
+  </div>
+  <div class="format-grid">
+    <div class="stage" data-reveal>
+      <span class="stage-n">01</span>
+      <h3>Choose a bench</h3>
+      <p>Proposition or opposition. The AI takes whichever side you leave behind, and means it.</p>
+    </div>
+    <div class="stage" data-reveal>
+      <span class="stage-n">02</span>
+      <h3>Evidence is pulled</h3>
+      <p>Every rebuttal draws on retrieved studies and figures, not vibes. No invented statistics.</p>
+    </div>
+    <div class="stage" data-reveal>
+      <span class="stage-n">03</span>
+      <h3>Six rounds</h3>
+      <p>Trade arguments. It won't concede, it finds new angles, and it goes after your weakest point.</p>
+    </div>
+    <div class="stage" data-reveal>
+      <span class="stage-n">04</span>
+      <h3>The House divides</h3>
+      <p>A neutral judge scores both benches, names a winner and tells you what to sharpen.</p>
+    </div>
+  </div>
+</section>

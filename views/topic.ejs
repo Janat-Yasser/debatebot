@@ -1,82 +1,95 @@
-<div class="topic-page">
-  <div class="topic-hero">
-    <a href="/" class="back-link">&larr; All Topics</a>
-    <div class="topic-hero-cat"><%= topic.category %></div>
-    <div class="topic-hero-meta">
-      <span class="topic-difficulty difficulty-<%= topic.difficulty.toLowerCase() %>"><%= topic.difficulty %></span>
+<section class="motion-hero" data-cat="<%= topic.category %>">
+  <div class="motion-hero-photo"></div>
+  <div class="motion-hero-inner">
+    <a href="/" class="back-link"><span aria-hidden="true">&larr;</span> All motions</a>
+    <div class="motion-hero-meta" data-reveal>
+      <span class="kicker">This House believes</span>
+      <span class="motion-cat"><%= topic.category %></span>
+      <span class="diff diff-<%= topic.difficulty.toLowerCase() %>"><%= topic.difficulty %></span>
     </div>
-    <h1 class="topic-hero-title"><%= topic.title %></h1>
-    <p class="topic-hero-desc"><%= topic.description %></p>
+    <h1 class="motion-hero-title" data-split><%= topic.title %></h1>
+    <p class="motion-hero-desc" data-reveal><%= topic.description %></p>
   </div>
+</section>
 
-  <!-- Side selection -->
-  <div class="side-selection">
-    <h2 class="side-selection-title">Choose Your Side</h2>
-    <p class="side-selection-sub">The AI will argue the opposite position with full conviction.</p>
+<!-- ── Pick a bench ──────────────────────────── -->
+<section class="floor" aria-label="Choose your side">
+  <form action="/debate/start" method="POST" class="bench bench-for side-form">
+    <input type="hidden" name="topicId" value="<%= topic.id %>">
+    <input type="hidden" name="userSide" value="for">
+    <button type="submit" class="bench-btn">
+      <span class="bench-photo" aria-hidden="true"></span>
+      <span class="bench-body">
+        <span class="bench-tag">Proposition &middot; you argue for</span>
+        <span class="bench-name"><%= topic.for_label %></span>
+        <span class="bench-desc">You defend the motion. The AI attacks it.</span>
+        <span class="bench-cta">Take this bench <span aria-hidden="true">&rarr;</span></span>
+      </span>
+      <span class="bench-big" aria-hidden="true">FOR</span>
+    </button>
+  </form>
 
-    <div class="sides-wrap">
-      <form action="/debate/start" method="POST" class="side-form">
-        <input type="hidden" name="topicId" value="<%= topic.id %>">
-        <input type="hidden" name="userSide" value="for">
-        <button type="submit" class="side-card side-card-for">
-          <div class="side-card-indicator for-indicator"></div>
-          <div class="side-card-label">I Argue</div>
-          <div class="side-card-name"><%= topic.for_label %></div>
-          <p class="side-card-desc">You argue in favor of the proposition. The AI argues against it.</p>
-          <div class="side-card-cta">Take This Side &rarr;</div>
-        </button>
-      </form>
+  <div class="floor-vs" aria-hidden="true"><span>VS</span></div>
 
-      <div class="vs-divider">
-        <div class="vs-line"></div>
-        <div class="vs-circle">VS</div>
-        <div class="vs-line"></div>
-      </div>
+  <form action="/debate/start" method="POST" class="bench bench-against side-form">
+    <input type="hidden" name="topicId" value="<%= topic.id %>">
+    <input type="hidden" name="userSide" value="against">
+    <button type="submit" class="bench-btn">
+      <span class="bench-photo" aria-hidden="true"></span>
+      <span class="bench-body">
+        <span class="bench-tag">Opposition &middot; you argue against</span>
+        <span class="bench-name"><%= topic.against_label %></span>
+        <span class="bench-desc">You oppose the motion. The AI defends it.</span>
+        <span class="bench-cta">Take this bench <span aria-hidden="true">&rarr;</span></span>
+      </span>
+      <span class="bench-big" aria-hidden="true">AGAINST</span>
+    </button>
+  </form>
+</section>
 
-      <form action="/debate/start" method="POST" class="side-form">
-        <input type="hidden" name="topicId" value="<%= topic.id %>">
-        <input type="hidden" name="userSide" value="against">
-        <button type="submit" class="side-card side-card-against">
-          <div class="side-card-indicator against-indicator"></div>
-          <div class="side-card-label">I Argue</div>
-          <div class="side-card-name"><%= topic.against_label %></div>
-          <p class="side-card-desc">You argue against the proposition. The AI defends it.</p>
-          <div class="side-card-cta">Take This Side &rarr;</div>
-        </button>
-      </form>
-    </div>
+<!-- ── Evidence room ─────────────────────────── -->
+<section class="evidence">
+  <div class="evidence-head">
+    <p class="kicker kicker-light" data-reveal>The evidence room</p>
+    <h2 class="section-title" data-split>What the AI has read.</h2>
+    <p class="evidence-sub" data-reveal><span data-count="<%= topic.chunks.length %>"><%= topic.chunks.length %></span> pieces of evidence on file. Here are a few.</p>
   </div>
-
-  <!-- Evidence preview -->
-  <div class="evidence-preview">
-    <h3 class="evidence-preview-title">Knowledge Base Preview</h3>
-    <p class="evidence-preview-sub">The AI retrieves from <%= topic.chunks.length %> evidence chunks — real data, real studies, real arguments.</p>
-    <div class="evidence-grid">
-      <% topic.chunks.slice(0, 4).forEach(chunk => { %>
-        <div class="evidence-chunk evidence-<%= chunk.side %>">
-          <div class="chunk-side-tag"><%= chunk.side === 'for' ? topic.for_label : topic.against_label %></div>
-          <p class="chunk-text"><%= chunk.text.substring(0, 130) %>...</p>
-        </div>
-      <% }) %>
-    </div>
-    <p class="evidence-note">+ <%= topic.chunks.length - 4 %> more evidence chunks retrieved dynamically during the debate</p>
+  <div class="evidence-grid">
+    <% topic.chunks.slice(0, 4).forEach((chunk, i) => { %>
+      <figure class="clip clip-<%= chunk.side %>" data-reveal>
+        <figcaption>
+          <span class="clip-side"><%= chunk.side === 'for' ? topic.for_label : topic.against_label %></span>
+          <span class="clip-id">Exhibit <%= String.fromCharCode(65 + i) %></span>
+        </figcaption>
+        <blockquote><%= chunk.text.length > 180 ? chunk.text.substring(0, 180).trim() + '…' : chunk.text %></blockquote>
+      </figure>
+    <% }) %>
   </div>
-</div>
+  <% if (topic.chunks.length > 4) { %>
+    <p class="evidence-note" data-reveal>+ <%= topic.chunks.length - 4 %> more, retrieved as the debate unfolds.</p>
+  <% } %>
+</section>
 
-<!-- Loading overlay -->
-<div class="loading-overlay" id="loadingOverlay" style="display:none">
-  <div class="loading-card">
-    <div class="loading-mark">DB</div>
-    <h3>The Chamber Awaits</h3>
-    <p>AI is preparing its opening argument...</p>
-    <div class="loading-bar"><div class="loading-fill"></div></div>
+<!-- ── Curtain (shown while the opening is generated) ── -->
+<div class="curtain" id="loadingOverlay" aria-live="polite">
+  <div class="curtain-l"></div>
+  <div class="curtain-r"></div>
+  <div class="curtain-copy">
+    <div class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <p class="curtain-k">Order, order</p>
+    <h3>The House is called to sit.</h3>
+    <p class="curtain-sub">Your opponent is preparing its opening statement&hellip;</p>
   </div>
 </div>
 
 <script>
   document.querySelectorAll('.side-form').forEach(form => {
-    form.addEventListener('submit', () => {
-      document.getElementById('loadingOverlay').style.display = 'flex';
+    form.addEventListener('submit', e => {
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.classList.add('is-on', form.classList.contains('bench-for') ? 'from-for' : 'from-against');
     });
+  });
+  window.addEventListener('pageshow', e => {
+    if (e.persisted) document.getElementById('loadingOverlay').classList.remove('is-on');
   });
 </script>

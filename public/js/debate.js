@@ -1,51 +1,78 @@
-/* =============================================
-   DEBATEBOT — Debate Arena JS
-   ============================================= */
-
+/* ==========================================================
+   DEBATEBOT: the chamber
+   ========================================================== */
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 let isWaiting = false;
-let currentRound = parseInt(document.getElementById('currentRound')?.textContent || '0');
+let currentRound = parseInt(document.getElementById('currentRound')?.textContent || '0', 10);
 
-// ── Character counter ──────────────────────────
+const chamber = document.getElementById('debateChamber');
+const inner = document.getElementById('chamberInner');
 const textarea = document.getElementById('argumentInput');
 const charCount = document.getElementById('charCount');
+const charMeter = document.getElementById('charMeter');
+const submitBtn = document.getElementById('submitBtn');
+
+/* ── Composer ─────────────────────────────────────────── */
+function autoGrow() {
+  if (!textarea) return;
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 220) + 'px';
+}
+
+function updateCount() {
+  const len = textarea.value.length;
+  charCount.textContent = len;
+  if (charMeter) {
+    charMeter.style.transform = `scaleX(${len / 1500})`;
+    charMeter.classList.toggle('warn', len > 1000 && len <= 1300);
+    charMeter.classList.toggle('max', len > 1300);
+  }
+}
 
 if (textarea) {
-  textarea.addEventListener('input', () => {
-    const len = textarea.value.length;
-    charCount.textContent = len;
-    charCount.style.color = len > 1300 ? '#e74c3c' : len > 1000 ? '#f59e0b' : '';
-  });
-
+  textarea.addEventListener('input', () => { updateCount(); autoGrow(); });
   textarea.addEventListener('keydown', e => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
       e.preventDefault();
       submitArgument();
     }
   });
+  submitBtn?.addEventListener('click', submitArgument);
+  setTimeout(() => textarea.focus({ preventScroll: true }), 900);
 }
 
-// ── Submit argument ────────────────────────────
+function setBusy(busy) {
+  if (!submitBtn) return;
+  submitBtn.disabled = busy;
+  submitBtn.querySelector('.btn-label').textContent = busy ? 'Listening' : 'Argue';
+}
+
+/* ── Submit ───────────────────────────────────────────── */
 async function submitArgument() {
-  if (isWaiting) return;
-  const input = document.getElementById('argumentInput');
-  const argument = input?.value?.trim();
+  if (isWaiting || !textarea) return;
+  const argument = textarea.value.trim();
   if (!argument) {
-    input.style.borderColor = '#c0392b';
-    input.placeholder = 'Please enter your argument first...';
-    setTimeout(() => { input.style.borderColor = ''; }, 1500);
+    textarea.classList.remove('is-empty');
+    void textarea.offsetWidth;
+    textarea.classList.add('is-empty');
+    textarea.placeholder = 'Say something first.';
+    textarea.focus();
     return;
   }
 
   isWaiting = true;
-  const submitBtn = document.getElementById('submitBtn');
-  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Waiting...'; }
+  setBusy(true);
 
-  appendMessage('user', argument, USER_SIDE);
-  input.value = '';
-  charCount.textContent = '0';
+  appendMessage('user', argument, USER_SIDE, currentRound + 1);
+  textarea.value = '';
+  updateCount();
+  autoGrow();
 
-  const typingEl = document.getElementById('typingIndicator');
-  if (typingEl) typingEl.style.display = 'flex';
+  const typing = document.getElementById('typingIndicator');
+  if (typing) {
+    typing.hidden = false;
+    inner.appendChild(typing); // keep it last
+  }
   scrollToBottom();
 
   try {
@@ -54,69 +81,79 @@ async function submitArgument() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId: SESSION_ID, argument })
     });
-
     const data = await res.json();
-    if (typingEl) typingEl.style.display = 'none';
+    if (typing) typing.hidden = true;
 
     if (!res.ok || data.error) {
       showError(data.error || 'Something went wrong. Please try again.');
       isWaiting = false;
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Argue'; }
+      setBusy(false);
       return;
     }
 
-    appendMessage('ai', data.rebuttal, AI_SIDE);
+    const msg = appendMessage('ai', data.rebuttal, AI_SIDE, data.round, true);
     currentRound = data.round;
-    updateRoundTracker(data.round, data.maxRounds);
+    updateRoundTracker(data.round);
+
+    const revealTime = REDUCE ? 0 : Math.min(msg.words * 22 + 500, 4200);
+    followReveal(revealTime);
 
     if (data.isOver) {
-      showDebateOver();
+      setTimeout(showDebateOver, revealTime + 300);
     } else {
       isWaiting = false;
-      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Argue'; }
+      setBusy(false);
       updateInputLabel(data.round + 1);
     }
-
-    scrollToBottom();
-
   } catch (err) {
-    if (typingEl) typingEl.style.display = 'none';
-    showError('Network error. Please check your connection.');
+    if (typing) typing.hidden = true;
+    showError('Network error. Check your connection and try again.');
     isWaiting = false;
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Argue'; }
+    setBusy(false);
   }
 }
 
-// ── Append message ─────────────────────────────
-function appendMessage(role, content, side) {
-  const chamber = document.getElementById('debateChamber');
-  if (!chamber) return;
-
+/* ── Messages ─────────────────────────────────────────── */
+function appendMessage(role, content, side, round, animateWords = false) {
   const sideLabel = side === 'for' ? FOR_LABEL : AGAINST_LABEL;
-  const from      = role === 'user' ? 'You' : 'AI Opponent';
-  const avatarTxt = role === 'user' ? 'YOU' : 'AI';
-  const avatarCls = role === 'user' ? 'avatar-you' : 'avatar-ai';
-
-  const msg = document.createElement('div');
-  msg.className = `message message-${role} message-${side}`;
+  const msg = document.createElement('article');
+  msg.className = `msg msg-${role} msg-${side}`;
   msg.innerHTML = `
-    <div class="message-avatar ${avatarCls}">${avatarTxt}</div>
-    <div class="message-body">
-      <div class="message-header">
-        <span class="message-from">${from}</span>
-        <span class="message-stance stance-${side}">${sideLabel}</span>
-      </div>
-      <div class="message-content">${escapeHtml(content)}</div>
-    </div>
-  `;
+    <header class="msg-head">
+      <span class="msg-who">${role === 'user' ? 'You' : 'AI opponent'}</span>
+      <span class="msg-side">${escapeHtml(sideLabel)}</span>
+      <span class="msg-round">Round ${round}</span>
+    </header>
+    <div class="msg-text"></div>`;
+
+  const text = msg.querySelector('.msg-text');
+  let words = 0;
+  if (animateWords && !REDUCE) {
+    // wrap each word so it can fade in, keeping the original whitespace
+    const frag = document.createDocumentFragment();
+    content.split(/(\s+)/).forEach(tok => {
+      if (!tok) return;
+      if (/^\s+$/.test(tok)) { frag.appendChild(document.createTextNode(tok)); return; }
+      const s = document.createElement('span');
+      s.className = 'tw';
+      s.style.setProperty('--i', Math.min(words++, 180));
+      s.textContent = tok;
+      frag.appendChild(s);
+    });
+    text.appendChild(frag);
+  } else {
+    text.textContent = content;
+  }
 
   const typing = document.getElementById('typingIndicator');
-  if (typing) chamber.insertBefore(msg, typing);
-  else chamber.appendChild(msg);
+  if (typing && typing.parentNode === inner) inner.insertBefore(msg, typing);
+  else inner.appendChild(msg);
+  msg.words = words;
+  return msg;
 }
 
-// ── Round tracker ──────────────────────────────
-function updateRoundTracker(round, maxRounds) {
+/* ── Round tracker ────────────────────────────────────── */
+function updateRoundTracker(round) {
   document.querySelectorAll('.round-dot').forEach((dot, i) => {
     dot.classList.remove('done', 'current');
     if (i < round) dot.classList.add('done');
@@ -131,62 +168,76 @@ function updateInputLabel(nextRound) {
   if (el) el.textContent = nextRound;
 }
 
-// ── Debate over ────────────────────────────────
+/* ── End of debate ────────────────────────────────────── */
 function showDebateOver() {
-  const inputWrap = document.getElementById('inputWrap');
-  if (inputWrap) inputWrap.remove();
-
+  const dock = document.getElementById('inputWrap');
   const banner = document.createElement('div');
-  banner.className = 'debate-over-banner';
+  banner.className = 'over';
   banner.innerHTML = `
-    <h2>Debate Complete</h2>
-    <p>All ${MAX_ROUNDS} rounds have been fought. Time for the judge's verdict.</p>
-    <a href="/verdict/${SESSION_ID}" class="btn-verdict">See the Verdict &rarr;</a>
-  `;
-
-  const page = document.querySelector('.debate-page');
-  if (page) page.appendChild(banner);
-  updateRoundTracker(MAX_ROUNDS, MAX_ROUNDS);
+    <p class="kicker">The floor is closed</p>
+    <h2>All ${MAX_ROUNDS} rounds are done.</h2>
+    <a href="/verdict/${encodeURIComponent(SESSION_ID)}" class="btn btn-verdict">Hear the verdict <span aria-hidden="true">&rarr;</span></a>`;
+  if (dock) dock.replaceWith(banner);
+  else document.querySelector('.debate')?.appendChild(banner);
+  updateRoundTracker(MAX_ROUNDS);
+  document.querySelectorAll('.round-dot').forEach(d => d.classList.add('done'));
+  scrollToBottom();
 }
 
-// ── Scroll ─────────────────────────────────────
+/* ── Scrolling ────────────────────────────────────────── */
 function scrollToBottom() {
-  const chamber = document.getElementById('debateChamber');
-  if (chamber) setTimeout(() => { chamber.scrollTop = chamber.scrollHeight; }, 100);
+  if (!chamber) return;
+  requestAnimationFrame(() => { chamber.scrollTop = chamber.scrollHeight; });
 }
 
-// ── Error toast ────────────────────────────────
+// keep the newest words in view while a reply fades in,
+// unless the reader has scrolled up to re-read something
+function followReveal(ms) {
+  if (!chamber) return;
+  const end = performance.now() + ms;
+  const step = () => {
+    const nearBottom = chamber.scrollHeight - chamber.scrollTop - chamber.clientHeight < 240;
+    if (nearBottom) chamber.scrollTop = chamber.scrollHeight;
+    if (performance.now() < end) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/* ── Toast ────────────────────────────────────────────── */
 function showError(msg) {
   const toast = document.createElement('div');
-  toast.style.cssText = `
-    position:fixed;bottom:100px;left:50%;transform:translateX(-50%);
-    background:#c0392b;color:white;padding:12px 24px;
-    border-radius:8px;font-size:0.85rem;font-weight:600;
-    z-index:999;box-shadow:0 4px 20px rgba(0,0,0,0.5);
-  `;
+  toast.className = 'toast';
+  toast.setAttribute('role', 'alert');
   toast.textContent = msg;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 4000);
+  setTimeout(() => toast.remove(), 4200);
 }
 
-// ── HTML escape ────────────────────────────────
 function escapeHtml(str) {
-  return str
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/\n/g, '<br>');
+    .replace(/"/g, '&quot;');
 }
 
-// ── Init ───────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  scrollToBottom();
+scrollToBottom();
 
-  // Animate score bars
-  document.querySelectorAll('.score-bar').forEach(bar => {
-    const target = bar.style.width;
-    bar.style.width = '0%';
-    setTimeout(() => { bar.style.width = target; }, 300);
+/* fresh debate: let the opening statement read itself in */
+(() => {
+  const msgs = inner?.querySelectorAll('article.msg');
+  if (REDUCE || !msgs || msgs.length !== 1) return;
+  const text = msgs[0].querySelector('.msg-text');
+  const content = text.textContent;
+  text.textContent = '';
+  let n = 0;
+  content.split(/(\s+)/).forEach(tok => {
+    if (!tok) return;
+    if (/^\s+$/.test(tok)) { text.appendChild(document.createTextNode(tok)); return; }
+    const s = document.createElement('span');
+    s.className = 'tw';
+    s.style.setProperty('--i', Math.min(n++, 180) + 18);
+    s.textContent = tok;
+    text.appendChild(s);
   });
-});
+})();

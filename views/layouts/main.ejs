@@ -3,27 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0c0c0d">
   <title><%= title %></title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>document.documentElement.classList.add('js')</script>
+  <link rel="preload" href="/fonts/big-shoulders-display-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <nav class="navbar">
-    <a href="/" class="nav-logo">
-      <span class="logo-mark">DB</span>
-      <span>Debate<strong>Bot</strong></span>
+  <div class="wipe" aria-hidden="true"><span></span><span></span></div>
+
+  <header class="nav">
+    <a href="/" class="brand" aria-label="DebateBot home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-word">Debate<b>Bot</b></span>
     </a>
-    <div class="nav-center">
-      <span class="nav-tagline">AI · RAG · Both Sides</span>
-    </div>
-    <a href="/" class="nav-cta">All Topics</a>
-  </nav>
+    <nav class="nav-links">
+      <a href="/#motions" class="nav-link">Motions</a>
+      <a href="/#format" class="nav-link">Format</a>
+      <a href="/#motions" class="nav-btn">Take the floor</a>
+    </nav>
+  </header>
 
   <main><%- body %></main>
 
-  <footer class="footer">
-    <p>DebateBot — Powered by <strong>Groq</strong> + <strong>RAG</strong> · Every argument grounded in evidence</p>
+  <footer class="foot">
+    <div class="foot-giant" aria-hidden="true">DEBATEBOT</div>
+    <div class="foot-row">
+      <span>Every argument grounded in evidence.</span>
+      <span>Groq &middot; RAG &middot; Six rounds</span>
+      <span>Photography via Unsplash</span>
+    </div>
   </footer>
 
   <script src="/js/app.js"></script>
