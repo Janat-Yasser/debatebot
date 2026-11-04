@@ -46,6 +46,7 @@ Open **http://localhost:3000**.
 | Variable | Required | Description |
 |---|---|---|
 | `GROQ_API_KEY` | yes | Groq API key |
+| `GROQ_MODEL` | no | Defaults to `llama-3.3-70b-versatile` |
 | `PORT` | no | Defaults to `3000` |
 
 ## Architecture
@@ -60,9 +61,10 @@ Browser ──► Express routes ──► debateController
            over topic chunks)  state + rounds)   rebuttal, verdict)
 ```
 
-- **Retrieval (`models/rag.js`)**: a lightweight TF-IDF-style scorer over each topic's evidence chunks, filtered to the AI's side. It needs no vector database.
+- **Retrieval (`models/rag.js`)**: TF-IDF with stemming over each topic's evidence chunks, filtered to the AI's side. It needs no vector database.
 - **Generation (`config/ai.js`)**: three prompts (opening statement, rebuttal, verdict) on `llama-3.3-70b-versatile`. The verdict comes back as structured JSON, with a safe fallback if parsing fails.
-- **Sessions (`models/session.js`)**: debates live in memory, so restarting the server clears them.
+- **Sessions (`models/session.js`)**: debates live in memory (2-hour expiry, least-recently-used eviction), so restarting the server clears them. Each session handles one argument at a time, so double-submits can't run two rounds.
+- **Safety**: arguments are capped at 2,000 characters, `/debate` routes are rate-limited per IP, the judge ignores instructions hidden inside debate turns, and async errors can't crash the server.
 
 | Route | Purpose |
 |---|---|
@@ -72,12 +74,21 @@ Browser ──► Express routes ──► debateController
 | `POST /debate/argue` | Submit your argument; the AI rebuts |
 | `GET /verdict/:sessionId` | Judge's verdict |
 
+## Tests
+
+```bash
+npm test
+```
+
+The AI calls are stubbed, so no API key is needed.
+
 ## Roadmap
 
 - [ ] Persist debates (SQLite or Mongo) so you can revisit transcripts
 - [ ] Stream AI responses token by token
 - [ ] Let users add their own motions and evidence
 - [ ] Embedding-based retrieval as an option
+- [ ] Evaluate retrieval quality (hit rate per topic)
 
 ## License
 

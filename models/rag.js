@@ -1,80 +1,63 @@
-// RAG Engine
-// Uses TF-IDF style keyword matching for retrieval
-// (lightweight, no external vector DB needed)
+// RAG retrieval engine
+// Real TF-IDF (term frequency × inverse document frequency) over each topic's evidence
+// chunks, with stemming, so "regulations" matches "regulate". No vector DB needed.
 
+const natural = require('natural');
 const { topics } = require('../data/topics/index');
 
-// ── Simple tokenizer ───────────────────────────
+const stem = (w) => natural.PorterStemmer.stem(w);
+const tokenizer = new natural.WordTokenizer();
+const STOP = new Set(natural.stopwords);
+
 function tokenize(text) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter(w => w.length > 3 && !STOP_WORDS.has(w));
+  return tokenizer
+    .tokenize(String(text).toLowerCase())
+    .filter((w) => w.length > 2 && !STOP.has(w))
+    .map(stem);
 }
 
-const STOP_WORDS = new Set([
-  'that','this','with','from','they','have','been','were','their',
-  'what','when','which','will','would','could','should','there',
-  'than','more','also','into','some','other','about','over','just',
-  'even','most','after','where','while','many','much','very','only',
-  'both','each','such','does','then','than','these','those','being',
-  'make','made','well','back','through','between','during','before'
-]);
+// Build one TF-IDF index per topic once, at startup.
+const indexes = new Map();
+for (const topic of topics) {
+  const tfidf = new natural.TfIdf();
+  topic.chunks.forEach((c) => tfidf.addDocument(tokenize(c.text)));
+  indexes.set(topic.id, tfidf);
+}
 
-// ── TF-IDF scoring ─────────────────────────────
-function score(query, chunk) {
-  const qTokens = tokenize(query);
-  const cTokens = tokenize(chunk.text);
-  const cSet = new Set(cTokens);
-
-  let hits = 0;
-  for (const t of qTokens) {
-    if (cSet.has(t)) hits++;
-    // partial match bonus
-    for (const ct of cTokens) {
-      if (ct.includes(t) || t.includes(ct)) hits += 0.3;
-    }
-  }
-
-  const tf = hits / (cTokens.length + 1);
-  const coverage = hits / (qTokens.length + 1);
-  return (tf + coverage) / 2;
+// Score every chunk of a topic against a query. Exported for tests.
+function scoreChunks(topicId, query) {
+  const topic = getTopic(topicId);
+  const tfidf = indexes.get(topicId);
+  if (!topic || !tfidf) return [];
+  const terms = tokenize(query);
+  const scores = new Array(topic.chunks.length).fill(0);
+  if (terms.length) tfidf.tfidfs(terms, (i, measure) => { scores[i] = measure; });
+  return topic.chunks.map((chunk, i) => ({ chunk, score: scores[i] }));
 }
 
 // ── Retrieve relevant chunks ───────────────────
 function retrieve(topicId, side, query, topK = 3) {
-  const topic = topics.find(t => t.id === topicId);
-  if (!topic) return [];
-
-  // Filter to relevant side + neutral chunks
-  const candidates = topic.chunks.filter(c => c.side === side || c.side === 'neutral');
-
-  // Score and sort
-  const scored = candidates.map(chunk => ({
-    chunk,
-    score: score(query, chunk)
-  })).sort((a, b) => b.score - a.score);
-
-  return scored.slice(0, topK).map(s => s.chunk);
+  return scoreChunks(topicId, query)
+    .filter(({ chunk }) => chunk.side === side || chunk.side === 'neutral')
+    // stable tie-break keeps the original evidence order when scores are equal
+    .map((s, i) => ({ ...s, i }))
+    .sort((a, b) => b.score - a.score || a.i - b.i)
+    .slice(0, topK)
+    .map((s) => s.chunk);
 }
 
-// ── Build context string for prompt ───────────-
+// ── Build context string for prompt ────────────
 function buildContext(chunks) {
   if (!chunks.length) return '';
-  return chunks.map((c, i) =>
-    `[Source ${i + 1}]: ${c.text}`
-  ).join('\n\n');
+  return chunks.map((c, i) => `[Source ${i + 1}]: ${c.text}`).join('\n\n');
 }
 
-// ── Get topic by id ────────────────────────────
 function getTopic(id) {
-  return topics.find(t => t.id === id) || null;
+  return topics.find((t) => t.id === id) || null;
 }
 
-// ── Get all topics ─────────────────────────────
 function getAllTopics() {
   return topics;
 }
 
-module.exports = { retrieve, buildContext, getTopic, getAllTopics };
+module.exports = { retrieve, buildContext, getTopic, getAllTopics, scoreChunks, tokenize };
