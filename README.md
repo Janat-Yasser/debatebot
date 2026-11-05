@@ -92,4 +92,4 @@ The AI calls are stubbed, so no API key is needed.
 
 ## License
 
-MIT
+© 2026 Janat Yasser. All rights reserved. See [LICENSE](LICENSE).
