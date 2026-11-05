@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Janat Yasser. All rights reserved.
 /* ==========================================================
    DEBATEBOT: shared motion
    split text, scroll reveals, hero divide, list preview,

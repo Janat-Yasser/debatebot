@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Janat Yasser. All rights reserved.
 // RAG Knowledge Base — 20 Topics, no emojis
 
 const topics = [

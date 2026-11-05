@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Janat Yasser. All rights reserved.
 // RAG retrieval engine
 // Real TF-IDF (term frequency × inverse document frequency) over each topic's evidence
 // chunks, with stemming, so "regulations" matches "regulate". No vector DB needed.

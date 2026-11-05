@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Janat Yasser. All rights reserved.
 const { getAllTopics, getTopic } = require('../models/rag');
 const { createSession, getSession } = require('../models/session');
 const { generateOpening, generateRebuttal, generateVerdict } = require('../config/ai');

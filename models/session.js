@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Janat Yasser. All rights reserved.
 // In-memory debate session store (sessions are ephemeral by design).
 // Sessions expire after 2 hours of inactivity; at most MAX_SESSIONS are kept,
 // evicting the least-recently-used ones first (not active debates).

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Janat Yasser. All rights reserved.
 const Groq = require('groq-sdk');
 const { retrieve, buildContext, getTopic } = require('../models/rag');
 
