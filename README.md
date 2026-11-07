@@ -4,6 +4,7 @@
 
 DebateBot is a debate sparring partner. You choose one of 20 motions and a side, and an LLM takes the opposite bench. It argues from a curated evidence base rather than inventing statistics. After six rounds, a neutral AI judge scores both sides, names a winner and tells you what to sharpen.
 
+[![CI](https://github.com/Janat-Yasser/debatebot/actions/workflows/ci.yml/badge.svg)](https://github.com/Janat-Yasser/debatebot/actions/workflows/ci.yml)
 ![Node](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
 ![Groq](https://img.shields.io/badge/LLM-Llama%203.3%2070B%20via%20Groq-F55036)
 ![RAG](https://img.shields.io/badge/retrieval-TF--IDF%20RAG-6E40C9)
@@ -16,6 +17,25 @@ DebateBot is a debate sparring partner. You choose one of 20 motions and a side,
 2. **Evidence is pulled**: every AI turn retrieves the most relevant chunks for its side from the topic's knowledge base and argues from them.
 3. **Six rounds**: trade arguments. The AI doesn't concede. It looks for new angles and goes after your weakest point.
 4. **The House divides**: an impartial judge model reads the transcript and returns a score for each side (0–100), a winner, and specific feedback.
+
+## One turn, under the hood
+
+The motion is *AI will destroy more jobs than it creates*. You take the opposition, so the AI argues for the motion, and you write:
+
+> *New technology has always created more jobs than it destroyed. The ATM did not eliminate bank tellers, and the internet created whole industries.*
+
+Before the AI replies, `retrieve()` ranks the proposition's evidence against your words with TF-IDF and keeps the top 3. On this argument, those are:
+
+1. *"Historical automation has disproportionately harmed low-income workers… AI is moving orders of magnitude faster, giving workers no time to retrain."*
+2. Frey and Osborne (Oxford): 47% of US jobs at high risk of automation.
+3. Goldman Sachs: 300 million full-time jobs exposed, white-collar work included.
+
+Your argument leaned on history, and the top result is the evidence about history, so the rebuttal argues *why this time is different*. You can reproduce this ranking without an API key:
+
+```bash
+node -e "const {retrieve}=require('./models/rag'); console.log(retrieve('ai-jobs','for','New technology has always created more jobs than it destroyed. The ATM did not eliminate bank tellers, and the internet created whole industries.').map(c => c.id))"
+# [ 4, 2, 3 ]
+```
 
 ## Topics
 
