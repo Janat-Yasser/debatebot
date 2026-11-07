@@ -6,7 +6,7 @@ DebateBot is a debate sparring partner. You choose one of 20 motions and a side,
 
 [![CI](https://github.com/Janat-Yasser/debatebot/actions/workflows/ci.yml/badge.svg)](https://github.com/Janat-Yasser/debatebot/actions/workflows/ci.yml)
 ![Node](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
-![Groq](https://img.shields.io/badge/LLM-Llama%203.3%2070B%20via%20Groq-F55036)
+![Groq](https://img.shields.io/badge/LLM-gpt--oss--120b%20via%20Groq-F55036)
 ![RAG](https://img.shields.io/badge/retrieval-TF--IDF%20RAG-6E40C9)
 
 ---
@@ -66,7 +66,7 @@ Open **http://localhost:3000**.
 | Variable | Required | Description |
 |---|---|---|
 | `GROQ_API_KEY` | yes | Groq API key |
-| `GROQ_MODEL` | no | Defaults to `llama-3.3-70b-versatile` |
+| `GROQ_MODEL` | no | Defaults to `openai/gpt-oss-120b` |
 | `PORT` | no | Defaults to `3000` |
 
 ## Architecture
@@ -82,7 +82,7 @@ Browser ──► Express routes ──► debateController
 ```
 
 - **Retrieval (`models/rag.js`)**: TF-IDF with stemming over each topic's evidence chunks, filtered to the AI's side. It needs no vector database.
-- **Generation (`config/ai.js`)**: three prompts (opening statement, rebuttal, verdict) on `llama-3.3-70b-versatile`. The verdict comes back as structured JSON, with a safe fallback if parsing fails.
+- **Generation (`config/ai.js`)**: three prompts (opening statement, rebuttal, verdict) on `openai/gpt-oss-120b`, with its reasoning kept short and out of the reply. It used Llama 3.3 70B until Groq retired that model for free and developer keys in August 2026. The verdict comes back as structured JSON, with a safe fallback if parsing fails.
 - **Sessions (`models/session.js`)**: debates live in memory (2-hour expiry, least-recently-used eviction), so restarting the server clears them. Each session handles one argument at a time, so double-submits can't run two rounds.
 - **Safety**: arguments are capped at 2,000 characters, `/debate` routes are rate-limited per IP, the judge ignores instructions hidden inside debate turns, and async errors can't crash the server.
 

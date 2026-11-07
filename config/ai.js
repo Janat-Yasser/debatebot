@@ -2,7 +2,14 @@
 const Groq = require('groq-sdk');
 const { retrieve, buildContext, getTopic } = require('../models/rag');
 
-const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+// Groq retired llama-3.3-70b-versatile for free and developer keys on 16 Aug 2026;
+// gpt-oss-120b is its replacement. Set GROQ_MODEL to use another model.
+const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+
+// gpt-oss models reason before answering. Keep that short and out of the reply,
+// and leave room for it in the token budget.
+const REASONING = /gpt-oss/.test(MODEL) ? { reasoning_effort: 'low', include_reasoning: false } : {};
+const budget = (tokens) => (/gpt-oss/.test(MODEL) ? tokens * 2 : tokens);
 
 let groq;
 function getGroq() {
@@ -66,7 +73,8 @@ Make your OPENING ARGUMENT. This is your first statement — establish your posi
     model: MODEL,
     messages,
     temperature: 0.8,
-    max_tokens: 600
+    max_tokens: budget(600),
+    ...REASONING
   });
 
   return response.choices[0].message.content;
@@ -109,7 +117,8 @@ ROUND ${session.round + 1} of ${session.maxRounds}: Rebut your opponent's argume
     model: MODEL,
     messages,
     temperature: 0.85,
-    max_tokens: 600
+    max_tokens: budget(600),
+    ...REASONING
   });
 
   return response.choices[0].message.content;
@@ -154,7 +163,8 @@ Deliver a JUDGE'S VERDICT in this exact JSON format (no markdown, just raw JSON)
     model: MODEL,
     messages,
     temperature: 0.3,
-    max_tokens: 700,
+    max_tokens: budget(700),
+    ...REASONING,
     response_format: { type: 'json_object' }
   });
 
